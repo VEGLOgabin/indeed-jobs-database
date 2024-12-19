@@ -1,0 +1,34 @@
+
+
+<<<<< ----- Script: 2 - Indeed Job Filter (DB + Dollar) by AHMAD S. for DOMAINSTERS LLC ----- >>>>>
+--------------------------------------------
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Initiating The Final Script at: 2024.12.17_21_06
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+Which Database Filter(s) do you need processed? Please choose one of the following:
+=> Enter 'A' for both
+=> Enter 'T' for Yes-King Only
+=> Enter 'F' for No-King Only
+
+User selected filter option: F
+
+<===     Filtering by Indeed_Local_Database_NO.csv    ===>
+
+==>  Total Data in the File: 3334
+==>  Total Unique Companies in the File: 1598
+==>  Total Unique Locations in the File: 391
+
+==>  Rows Deleted Based on Companies: 0
+==>  Rows Deleted Based on Locations: 1886
+
+Total Data Remaining in Filtered Data: 1448
+
+<===     Final Filtering for the NO_KING Database    ===>
+
+
+++++++++++++++++++++++++++++++++++++++++++++++
+CSV Contains 1448 Records
+++++++++++++++++++++++++++++++++++++++++++++++
+

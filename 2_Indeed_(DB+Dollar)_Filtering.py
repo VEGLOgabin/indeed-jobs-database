@@ -1,7 +1,5 @@
 import argparse
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
+import undetected_chromedriver as uc
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -17,6 +15,7 @@ import random
 
 # Get the input CSV file name
 CSV_file = input('Enter the CSV file name (e.g., file.csv): ')
+CSV_file = "01-7Days-All_Data-2024.12.15_08_20.csv"
 CSV = CSV_file.split('-')[1]
 
 # Prompt the user to choose which database filters to process
@@ -37,16 +36,23 @@ original_stdout = sys.stdout
 log_file = open(log_file_name, "w", encoding="utf-8")
 sys.stdout = log_file
 
+# def initialize_driver():
+#     chrome_options = uc.ChromeOptions()
+#     driver = uc.Chrome(options=chrome_options)
+#     return driver
+
 def initialize_driver():
-    chrome_options = Options()
-    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-    chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
-    # chrome_options.add_argument(f"user-data-dir=C:\\Users\\Shayan\\AppData\\Local\\Google\\Chrome\\User Data\\Default")
-    chrome_options.add_argument(f"user-data-dir=C:\\Users\\ssmcse\\AppData\\Local\\Google\\Chrome\\User Data\\Default")
+    # Initialize Chrome options
+    chrome_options = uc.ChromeOptions()
+    # Suppress logs for a cleaner output
     chrome_options.add_argument("--log-level=3")
-    chrome_driver_path = "C:\\chromedriver-win64\\chromedriver.exe"
-    service = Service(chrome_driver_path)
-    driver = webdriver.Chrome(service=service, options=chrome_options)
+    # Optionally, add a custom User-Agent (if needed, uncomment and customize)
+    # chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+    
+    # Automatically manage the ChromeDriver version
+    driver_path = ChromeDriverManager().install()
+    driver = uc.Chrome(driver_executable_path=driver_path, options=chrome_options)
+    
     return driver
 
 def read_csv_files(file1, file2):
@@ -190,11 +196,81 @@ def filter_dollar_and_expired_jobs(driver, input_csv_file, output_csv_file):
                         time.sleep(wait_time)
 
                 except Exception as e:
-                    custom_print(f"Skipping Row {row_count}/{len(rows)-1} After Retry Due To CAPTCHA or Other Error")
-                    row_count += 1
+
+                    custom_print(f"Skipping Row {row_count}/{len(rows)-1} Due To CAPTCHA or Other Error - Retrying ....")
+                    driver.quit()
+                    
                     time.sleep(wait_time)
                     time.sleep(10)
                     custom_print(f"=> Sleeping: {wait_time} seconds + 10 seconds extra sleep for CAPTCHA")
+                    
+                    driver = initialize_driver()
+                    
+                    try:
+                        driver.get(job_url)
+                        job_descriptions = WebDriverWait(driver, 10).until(
+                            EC.presence_of_all_elements_located((By.CSS_SELECTOR, "#viewJobSSRRoot > div > div.css-1quav7f.eu4oa1w0 > div > div > div.jobsearch-JobComponent.css-u4y1in.eu4oa1w0"))
+                        )
+
+                        if "$" in job_descriptions[0].text:
+                            custom_print(f"Removing Row {row_count}/{len(rows)-1} Due To Dollar Sign '$'")
+                            row_count += 1 
+                            time.sleep(wait_time)
+                            continue
+
+                        elif "job has expired" in job_descriptions[0].text:
+                            custom_print(f"Removing Row {row_count}/{len(rows)-1} Due To 'Job Expired'")
+                            row_count += 1 
+                            time.sleep(wait_time)
+                            continue      
+
+                        else:
+                            writer.writerow(row)
+                            custom_print(f"****** **** Keeping Row {row_count}/{len(rows)-1} **** ******")
+                            row_count += 1
+                            time.sleep(wait_time)
+
+                    except Exception as e:
+
+                        custom_print(f"Skipping Row {row_count}/{len(rows)-1} Due To CAPTCHA or Other Error - Retrying ....")
+                        driver.quit()
+                        
+                        time.sleep(wait_time)
+                        time.sleep(10)
+                        custom_print(f"=> Sleeping: {wait_time} seconds + 10 seconds extra sleep for CAPTCHA")
+                        
+                        driver = initialize_driver()
+                        
+                        try:
+                            driver.get(job_url)
+                            job_descriptions = WebDriverWait(driver, 10).until(
+                                EC.presence_of_all_elements_located((By.CSS_SELECTOR, "#viewJobSSRRoot > div > div.css-1quav7f.eu4oa1w0 > div > div > div.jobsearch-JobComponent.css-u4y1in.eu4oa1w0"))
+                            )
+
+                            if "$" in job_descriptions[0].text:
+                                custom_print(f"Removing Row {row_count}/{len(rows)-1} Due To Dollar Sign '$'")
+                                row_count += 1 
+                                time.sleep(wait_time)
+                                continue
+
+                            elif "job has expired" in job_descriptions[0].text:
+                                custom_print(f"Removing Row {row_count}/{len(rows)-1} Due To 'Job Expired'")
+                                row_count += 1 
+                                time.sleep(wait_time)
+                                continue      
+
+                            else:
+                                writer.writerow(row)
+                                custom_print(f"****** **** Keeping Row {row_count}/{len(rows)-1} **** ******")
+                                row_count += 1
+                                time.sleep(wait_time)
+
+                        except Exception as e:
+                            custom_print(f"Skipping Row {row_count}/{len(rows)-1} After Retry Due To CAPTCHA or Other Error")
+                            row_count += 1
+                            time.sleep(wait_time)
+                            time.sleep(10)
+                            custom_print(f"=> Sleeping: {wait_time} seconds + 10 seconds extra sleep for CAPTCHA")
                 
             time.sleep(2)
 
